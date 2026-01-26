@@ -6,13 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Orders_detail extends Model
 {
+    protected $guarded = [];
+
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function medicine()
+    public function product()
     {
-        return $this->belongsTo(Medicine::class);
+        return $this->belongsTo(Medicine::class, 'medicine_id');
     }
+
 }

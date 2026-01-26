@@ -5,61 +5,75 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->sendError('Validation Error.', $validator->errors());
-        }
-
-        $input = $request->all();
-        $input['password'] = bcrypt($input['password']);
-        $user = User::create($input);
-        $success['token'] =  $user->createToken('api-token')->plainTextToken;
-        $success['name'] =  $user->name;
-
-        return $this->sendResponse($success, 'User register successfully.');
-    }
-
-
     public function login(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Invalid credentials'
-            ], 401);
+        $user = User::where('email', $data['email'])->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        $user = Auth::user();
-        $token = $user->createToken('api-token')->plainTextToken;
+        // Force set password flow
+        if (is_null($user->password)) {
+            return response()->json([
+                'message' => 'Account not activated. Please set your password.',
+                'code' => 'PASSWORD_REQUIRED'
+            ], 403);
+        }
 
-        // $token = $user->createToken('mobile-app', ['read', 'create']);
-        // $token = $user->createToken('admin-panel', ['read', 'create', 'update', 'delete', 'admin']);
+        if (!Hash::check($data['password'], $user->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        $token = $user->createToken('react-client')->plainTextToken;
 
         return response()->json([
             'token' => $token,
-            'user' => $user
+            'user' => $user,
         ]);
     }
 
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        $request->user()->currentAccessToken()->delete();
+
         return response()->json(['message' => 'Logged out']);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $status = Password::broker()->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->password = Hash::make($password);
+                $user->save();
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => __($status)
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Password set successfully. You can now login.'
+        ]);
     }
 }

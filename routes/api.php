@@ -5,16 +5,12 @@ use App\Http\Controllers\Api\OrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::post('/checkout', [OrderController::class, 'checkout']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
-Route::controller(AuthController::class)->group(function () {
-    Route::post('register', 'register');
-    Route::post('login', 'login');
-    Route::post('logout', 'logout')->middleware('auth:sanctum');
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/my-orders', [OrderController::class, 'myOrders']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 });
-
-// Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('orders', OrderController::class);
-// });

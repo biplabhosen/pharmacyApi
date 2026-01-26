@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
+    protected $fillable = [
+        'user_id',
+        'name',
+        'phone',
+        'email',
+        'address',
+    ];
+
+    
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -15,5 +24,5 @@ class Customer extends Model
     {
         return $this->hasMany(Order::class);
     }
-    
+
 }
