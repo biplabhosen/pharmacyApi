@@ -76,4 +76,36 @@ class AuthController extends Controller
             'message' => 'Password set successfully. You can now login.'
         ]);
     }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = \App\Models\User::where('email', $request->email)->first();
+
+        // Do NOT reveal if user exists (security best practice)
+        if (!$user) {
+            return response()->json([
+                'message' => 'If your email exists, a reset link has been sent.'
+            ]);
+        }
+
+        // Create reset token
+        $token = Password::broker()->createToken($user);
+
+        // Build SPA reset URL
+        $resetUrl = config('app.frontend_url')
+            . "/reset-password?token={$token}&email=" . urlencode($user->email);
+
+        // Send custom mail
+        \Mail::to($user->email)->send(
+            new \App\Mail\SetPasswordMail($resetUrl)
+        );
+
+        return response()->json([
+            'message' => 'If your email exists, a reset link has been sent.'
+        ]);
+    }
 }

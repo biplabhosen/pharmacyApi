@@ -64,6 +64,7 @@ class OrderController extends Controller
             $order = Order::create([
                 'customer_id' => $customer->id,
                 'total_amount' => $data['total'],
+                'net_amount' => $data['total'],
                 'status_id' => 1,
                 'sale_date' => now(),
                 'delivery_date' => now()->addDays(5),
