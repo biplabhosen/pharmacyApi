@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\SetPasswordMail;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Order;
@@ -80,13 +81,18 @@ class OrderController extends Controller
                 ]);
             }
 
+            if (is_null($user->password)) {
+                // Generate password reset token
             $token = Password::broker()->createToken($user);
 
             // Save or just use token (Laravel stores in password_reset_tokens table)
             $resetUrl = config('app.frontend_url') . "/reset-password?token={$token}&email={$user->email}";
 
             // Send custom email
-            Mail::to($user->email)->send(new \App\Mail\SetPasswordMail($resetUrl));
+            Mail::to($user->email)->send(
+                new SetPasswordMail($resetUrl)
+            );
+            }
 
             return response()->json([
                 'success' => true,

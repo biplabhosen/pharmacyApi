@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\SetPasswordMail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 
 class AuthController extends Controller
@@ -50,6 +52,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out']);
     }
 
+    
     public function resetPassword(Request $request)
     {
         $request->validate([
@@ -100,8 +103,8 @@ class AuthController extends Controller
             . "/reset-password?token={$token}&email=" . urlencode($user->email);
 
         // Send custom mail
-        \Mail::to($user->email)->send(
-            new \App\Mail\SetPasswordMail($resetUrl)
+        Mail::to($user->email)->send(
+            new SetPasswordMail($resetUrl)
         );
 
         return response()->json([
