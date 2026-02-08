@@ -31,9 +31,10 @@ class OrderController extends Controller
             'customer.city' => 'required|string',
             'customer.state' => 'required|string',
             'customer.zip' => 'required|string',
-
             'payment_method' => 'required|string',
             'delivery_option' => 'required|string',
+            'vat' => 'nullable|numeric',
+            'shipping_charge' => 'nullable|numeric',
             'total' => 'required|numeric',
         ]);
 
@@ -65,6 +66,8 @@ class OrderController extends Controller
                 'customer_id' => $customer->id,
                 'total_amount' => $data['total'],
                 'net_amount' => $data['total'],
+                'vat' => $data['vat'] ?? 0,
+                'shipping_charge' => $data['shipping_charge'] ?? 0,
                 'status_id' => 1,
                 'sale_date' => now(),
                 'delivery_date' => now()->addDays(5),
@@ -80,6 +83,7 @@ class OrderController extends Controller
                 ]);
             }
 
+            if (is_null($user->password)) {
             $token = Password::broker()->createToken($user);
 
             // Save or just use token (Laravel stores in password_reset_tokens table)
@@ -87,6 +91,7 @@ class OrderController extends Controller
 
             // Send custom email
             Mail::to($user->email)->send(new \App\Mail\SetPasswordMail($resetUrl));
+            }
 
             return response()->json([
                 'success' => true,
