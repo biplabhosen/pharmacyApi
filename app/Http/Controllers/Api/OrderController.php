@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\SetPasswordMail;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Order;
@@ -90,7 +91,9 @@ class OrderController extends Controller
             $resetUrl = config('app.frontend_url') . "/reset-password?token={$token}&email={$user->email}";
 
             // Send custom email
-            Mail::to($user->email)->send(new \App\Mail\SetPasswordMail($resetUrl));
+            Mail::to($user->email)->send(
+                new SetPasswordMail($resetUrl)
+            );
             }
 
             return response()->json([
